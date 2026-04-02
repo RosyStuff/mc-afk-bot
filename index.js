@@ -1,4 +1,3 @@
-// MADE BY ROSY
 const mineflayer = require('mineflayer');
 
 const bot = mineflayer.createBot({
@@ -9,11 +8,11 @@ const bot = mineflayer.createBot({
 });
 
 // 1. SAFE LOGIN LOGIC
-// THE FIX: We wait for the server to sync our position before sending ANY data
-bot.on('move', () => {
+// THE FIX: Use 'forcedMove' to catch the actual numbers from the server
+bot.on('forcedMove', () => {
   if (!bot.hasSpawned) {
     bot.hasSpawned = true;
-    console.log('Bot synced with Purpur! Starting AuthMe in 10s...');
+    console.log(`Synced at: ${bot.entity.position}. Starting AuthMe...`);
     
     // Send AuthMe commands
     // REMOVE THEM IF YOU DONT USE LOGIN
@@ -24,16 +23,15 @@ bot.on('move', () => {
       
       // Start anti-AFK only AFTER login and a small delay
       startAntiAFK();
-    }, 10000); // MODIFY THIS DELAY PART - Set to 10s to fix Purpur errors
+    }, 10000); // MODIFY THIS DELAY PART
   }
 });
 
 // 2. SAFE ANTI-AFK (No glitchy packets)
 function startAntiAFK() {
   setInterval(() => {
-    // Instead of jumping (which causes packet errors), 
-    // just look around randomly
-    if (bot.entity) {
+    // We only use 'look' because 'jump' or 'walk' triggers 'x=true' kicks on Aternos
+    if (bot.entity && bot.entity.position) {
       const yaw = Math.random() * Math.PI * 2;
       const pitch = (Math.random() - 0.5) * Math.PI;
       bot.look(yaw, pitch, false);
