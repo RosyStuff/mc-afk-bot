@@ -9,33 +9,34 @@ const bot = mineflayer.createBot({
 
 // 1. SAFE LOGIN LOGIC
 bot.on('spawn', () => {
-  // THE FIX: Disable physics immediately so the bot stops sending 'true/false' packets
-  bot.physicsEnabled = false; 
-  console.log('Physics paused. Syncing coordinates as numbers...');
-
+  // THE FIX: Reset all movement packets to prevent 'x=true' Purpur errors
+  bot.clearControlStates();
+  
   if (!bot.hasSpawned) {
     bot.hasSpawned = true;
+    console.log('Bot spawned! Waiting for Purpur to confirm presence...');
     
     // Send AuthMe commands
     // REMOVE THEM IF YOU DONT USE LOGIN
+    // WE USE A LONGER DELAY (15s) so AuthMe doesn't say "wasn't online"
     setTimeout(() => {
-      // Re-enable physics only AFTER the server has confirmed our position
-      bot.physicsEnabled = true;
-
+      console.log('Sending AuthMe commands now...');
       bot.chat('/register MyPassword123 MyPassword123'); // CHANGE TO THE PASSWORD YOU LIKE
-      bot.chat('/login MyPassword123'); // CHANGE TO YOUR PASSWORD
-      console.log('Login commands sent!');
       
-      // Start anti-AFK only AFTER login and a small delay
-      startAntiAFK();
-    }, 10000); // MODIFY THIS DELAY PART
+      // Delay the login by 2 more seconds to prevent "Aborted" error
+      setTimeout(() => {
+        bot.chat('/login MyPassword123'); // CHANGE TO YOUR PASSWORD
+        console.log('Login successful!');
+        startAntiAFK();
+      }, 2000);
+    }, 15000); // 15s delay ensures the bot is "fully online" for AuthMe
   }
 });
 
 // 2. SAFE ANTI-AFK (No glitchy packets)
 function startAntiAFK() {
   setInterval(() => {
-    // We check if position is a NUMBER to prevent 'x=true' kicks
+    // Only look around if x, y, and z are REAL NUMBERS (Fixes x=true error)
     if (bot.entity && typeof bot.entity.position.x === 'number') {
       const yaw = Math.random() * Math.PI * 2;
       const pitch = (Math.random() - 0.5) * Math.PI;
