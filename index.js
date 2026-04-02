@@ -8,15 +8,21 @@ const bot = mineflayer.createBot({
 });
 
 // 1. SAFE LOGIN LOGIC
-// THE FIX: Use 'forcedMove' to catch the actual numbers from the server
-bot.on('forcedMove', () => {
+bot.on('spawn', () => {
+  // THE FIX: Immediately stop all movement states to prevent 'true/false' packet errors
+  bot.clearControlStates(); 
+  
   if (!bot.hasSpawned) {
     bot.hasSpawned = true;
-    console.log(`Synced at: ${bot.entity.position}. Starting AuthMe...`);
+    console.log('Bot spawned! Syncing coordinates as numbers...');
     
     // Send AuthMe commands
     // REMOVE THEM IF YOU DONT USE LOGIN
     setTimeout(() => {
+      // We manually update the position one time to ensure numbers are sent
+      const pos = bot.entity.position;
+      bot.lookAt(pos.offset(0, 1.6, 0)); 
+
       bot.chat('/register MyPassword123 MyPassword123'); // CHANGE TO THE PASSWORD YOU LIKE
       bot.chat('/login MyPassword123'); // CHANGE TO YOUR PASSWORD
       console.log('Login commands sent!');
@@ -30,8 +36,8 @@ bot.on('forcedMove', () => {
 // 2. SAFE ANTI-AFK (No glitchy packets)
 function startAntiAFK() {
   setInterval(() => {
-    // We only use 'look' because 'jump' or 'walk' triggers 'x=true' kicks on Aternos
-    if (bot.entity && bot.entity.position) {
+    // We ONLY use look() with 'false' for 'force' to prevent Purpur packet errors
+    if (bot.entity && typeof bot.entity.position.x === 'number') {
       const yaw = Math.random() * Math.PI * 2;
       const pitch = (Math.random() - 0.5) * Math.PI;
       bot.look(yaw, pitch, false);
