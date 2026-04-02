@@ -9,39 +9,42 @@ const bot = mineflayer.createBot({
 
 // 1. SAFE LOGIN LOGIC
 bot.on('spawn', () => {
-  // THE FIX: Reset all movement packets to prevent 'x=true' Purpur errors
-  bot.clearControlStates();
-  
+  // THE FIX: Completely disable physics to stop 'true/false' boolean packets
+  bot.physics.enabled = false; 
+  console.log('Physics disabled to prevent Boolean packet errors...');
+
   if (!bot.hasSpawned) {
     bot.hasSpawned = true;
-    console.log('Bot spawned! Waiting for Purpur to confirm presence...');
+    console.log('Bot spawned! Waiting for Purpur coordinate sync...');
     
     // Send AuthMe commands
     // REMOVE THEM IF YOU DONT USE LOGIN
-    // WE USE A LONGER DELAY (15s) so AuthMe doesn't say "wasn't online"
     setTimeout(() => {
-      console.log('Sending AuthMe commands now...');
-      bot.chat('/register MyPassword123 MyPassword123'); // CHANGE TO THE PASSWORD YOU LIKE
-      
-      // Delay the login by 2 more seconds to prevent "Aborted" error
-      setTimeout(() => {
-        bot.chat('/login MyPassword123'); // CHANGE TO YOUR PASSWORD
-        console.log('Login successful!');
+      // Re-enable physics only AFTER we are sure we have real numbers
+      if (typeof bot.entity.position.x === 'number') {
+        bot.physics.enabled = true;
+        console.log('Coordinates synced as numbers. Sending login...');
+        
+        bot.chat('/register MyPassword123 MyPassword123'); // CHANGE TO THE PASSWORD YOU LIKE
+        setTimeout(() => {
+          bot.chat('/login MyPassword123'); // CHANGE TO YOUR PASSWORD
+        }, 2000);
+        
         startAntiAFK();
-      }, 2000);
-    }, 15000); // 15s delay ensures the bot is "fully online" for AuthMe
+      }
+    }, 15000); // 15s delay to fix 'wasnt online' and 'x=true' errors
   }
 });
 
 // 2. SAFE ANTI-AFK (No glitchy packets)
 function startAntiAFK() {
   setInterval(() => {
-    // Only look around if x, y, and z are REAL NUMBERS (Fixes x=true error)
+    // Final shield: Never look if coordinates aren't numbers
     if (bot.entity && typeof bot.entity.position.x === 'number') {
       const yaw = Math.random() * Math.PI * 2;
       const pitch = (Math.random() - 0.5) * Math.PI;
       bot.look(yaw, pitch, false);
-      console.log('Bot looked around to stay active');
+      console.log('Bot looked around safely.');
     }
   }, 30000); // Every 30 seconds
 }
