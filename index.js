@@ -9,19 +9,18 @@ const bot = mineflayer.createBot({
 
 // 1. SAFE LOGIN LOGIC
 bot.on('spawn', () => {
-  // THE FIX: Immediately stop all movement states to prevent 'true/false' packet errors
-  bot.clearControlStates(); 
-  
+  // THE FIX: Disable physics immediately so the bot stops sending 'true/false' packets
+  bot.physicsEnabled = false; 
+  console.log('Physics paused. Syncing coordinates as numbers...');
+
   if (!bot.hasSpawned) {
     bot.hasSpawned = true;
-    console.log('Bot spawned! Syncing coordinates as numbers...');
     
     // Send AuthMe commands
     // REMOVE THEM IF YOU DONT USE LOGIN
     setTimeout(() => {
-      // We manually update the position one time to ensure numbers are sent
-      const pos = bot.entity.position;
-      bot.lookAt(pos.offset(0, 1.6, 0)); 
+      // Re-enable physics only AFTER the server has confirmed our position
+      bot.physicsEnabled = true;
 
       bot.chat('/register MyPassword123 MyPassword123'); // CHANGE TO THE PASSWORD YOU LIKE
       bot.chat('/login MyPassword123'); // CHANGE TO YOUR PASSWORD
@@ -36,7 +35,7 @@ bot.on('spawn', () => {
 // 2. SAFE ANTI-AFK (No glitchy packets)
 function startAntiAFK() {
   setInterval(() => {
-    // We ONLY use look() with 'false' for 'force' to prevent Purpur packet errors
+    // We check if position is a NUMBER to prevent 'x=true' kicks
     if (bot.entity && typeof bot.entity.position.x === 'number') {
       const yaw = Math.random() * Math.PI * 2;
       const pitch = (Math.random() - 0.5) * Math.PI;
