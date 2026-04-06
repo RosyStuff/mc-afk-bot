@@ -45,8 +45,13 @@ function startAntiAFK() {
       const pitch = (Math.random() - 0.5) * Math.PI;
       bot.look(yaw, pitch, false);
       console.log('Bot looked around safely.');
+      // jump
+      
+      bot.setControlState('jump', true);
+      bot.setControlState('jump', false);
+      console.log('I jumped!')
     }
-  }, 30000); // Every 30 seconds
+  }, 1000); // Every 1 seconds or idk
 }
 
 bot.on('error', (err) => console.log('Error:', err));
