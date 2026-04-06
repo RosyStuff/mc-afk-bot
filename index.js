@@ -47,9 +47,11 @@ function startAntiAFK() {
       console.log('Bot looked around safely.');
       // jump
       
-      bot.setControlState('jump', true);
-      bot.setControlState('jump', false);
-      console.log('I jumped!')
+bot.setControlState('forward', true);
+bot.setControlState('jump', true);
+await bot.waitForTicks(2);
+bot.clearControlStates(); // Resets everything at once
+
     }
   }, 1000); // Every 1 seconds or idk
 }
