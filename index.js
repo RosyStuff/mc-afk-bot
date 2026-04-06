@@ -46,7 +46,7 @@ function startAntiAFK() {
       bot.look(yaw, pitch, false);
       console.log('Bot looked around safely.');
     }
-  }, 30000); // Every 30 seconds
+  }, 1000); // Every 1 seconds or idk
 }
 
 bot.on('error', (err) => console.log('Error:', err));
