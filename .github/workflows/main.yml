@@ -1,17 +1,44 @@
-name: Run Minecraft Bot
+name: 24/7 Minecraft AFK Bot
+
 on:
   push:
     branches: [ main ]
   schedule:
-    - cron: '0 */4 * * *' # Restarts every 4 hours to avoid timing out
+    - cron: '0 */4 * * *' # Automatically restarts every 4 hours
+  workflow_dispatch: # Adds a "Run Workflow" button in GitHub Actions tab
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 350 # Shuts down at 5h 50m so GitHub can restart it cleanly
+    
+    permissions:
+      contents: write # Needed for the 'Keep Alive' auto-commit
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - run: node index.js
+
+      - name: Install Dependencies
+        run: npm install mineflayer
+
+      - name: Run AFK Bot
+        run: node index.js
+
+      # --- THE "KEEP ALIVE" TRICK ---
+      # This makes a small edit to the repo every run to prevent GitHub
+      # from disabling your schedule after 60 days of inactivity.
+      - name: Keep Workflow Active
+        if: always()
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          echo "Last run: $(date)" > keep_alive.txt
+          git add keep_alive.txt
+          git commit -m "Keep-alive: Workflow heart-beat" || exit 0
+          git push
